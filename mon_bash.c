@@ -6,8 +6,20 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+typedef struct t_fichier
+{
+    ino_t inode;
+    char *nom;
+}
+
 int recup_saisi(char*** saisi_utilisateur);
 ino_t mycreat(char* nom, mode_t mode);
+ino_t myopen(char* nom, mode_t mode);
+void myclose(ino_t inode);
+int myread(ino_t inode, char **buffer, int nombre);
+int myread(ino_t inode, char **buffer, int nombre);
+
+t_fichier* bd=(t_fichier*)malloc(sizeof(t_fichier));
 
 int main(int nbarg, char* argv[])
 {
@@ -21,8 +33,20 @@ int main(int nbarg, char* argv[])
         nbr_mot=recup_saisi(&saisi_utilisateur);
         
         if(strstr(saisi_utilisateur[0],"touch"))
+        {
             for(i=1;i<nbr_mot;i++)
                 printf("nouveau inode %llu\n",mycreat(saisi_utilisateur[i],S_IROTH | S_IWUSR | S_IRUSR | S_IRGRP | S_IFREG));
+        }
+        else if(strstr(saisi_utilisateur[0],"open"))
+        {
+            for(i=1;i<nbr_mot;i++)
+                printf("inode %llu\n",myopen(saisi_utilisateur[i],S_IROTH | S_IWUSR | S_IRUSR | S_IRGRP | S_IFREG));
+        }
+        else if(strstr(saisi_utilisateur[0],"close"))
+        {
+            for(i=1;i<nbr_mot;i++)
+                myclose(myopen(saisi_utilisateur[i],S_IROTH | S_IWUSR | S_IRUSR | S_IRGRP | S_IFREG));
+        }
     }while(!strstr(saisi_utilisateur[0],"quitter"));
 }
 
@@ -64,4 +88,54 @@ ino_t mycreat(char* nom, mode_t mode)
     creat(nom,mode);
     stat(nom, &sb);
     return sb.st_ino;
+}
+                
+ino_t myopen(char* nom, mode_t mode)
+{
+    struct stat sb;
+    ino_t inode;
+    if(open(nom, O_RDONLY | O_WDONLY)==-1)
+    {
+        inode=mycreat(nom,mode);
+        open(nom, O_RDONLY | O_WDONLY);
+        return inode;
+    }
+    stat(nom, &sb);
+    return sb.st_ino;
+}
+
+void myclose(ino_t inode)
+{
+    close(inode);
+}
+
+int myread(ino_t inode, char **buffer, int nombre)
+{
+    *buffer=(char*)realloc(*buffer,sizeof(char)*nombre);
+    for(i=0;i<strlen(bd);i++)
+    {
+        if(bd[i].inode==inode)
+        {
+            fgets(*buffer, nombre, bd[i].nom);
+            printf("%s",*buffer);
+            return nombre;
+        }
+    }
+    return 0;
+}
+
+
+int myread(ino_t inode, char **buffer, int nombre)
+{
+    *buffer=(char*)realloc(*buffer,sizeof(char)*nombre);
+    fgets(*buffer, nombre, stdin);
+    for(i=0;i<strlen(bd);i++)
+    {
+        if(bd[i].inode==inode)
+        {
+            fputs(*buffer, nombre, bd[i].nom);
+            return nombre;
+        }
+    }
+    return 0;
 }
