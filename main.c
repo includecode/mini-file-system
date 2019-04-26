@@ -18,15 +18,14 @@ int myread(ino_t inode, char **buffer, int nombre);
 int main(int nbarg, char* argv[])
 {
 
-harddisk_t* hdd = init_hdd();
-    t_fichier *fichier = creer_un_fichier(hdd);
-    inode_t *inode = allouer_inode(fichier, hdd);
-    hdd->tab_blocs = allouer_blocs(hdd);
-    ajouter_fichier_dans_bloc(hdd, fichier);
+    harddisk_t* hdd = boot();
 
     t_fichier *fichier2 = creer_un_fichier(hdd);
     inode_t *inode2 = allouer_inode(fichier2, hdd);
     ajouter_fichier_dans_bloc(hdd, fichier2);
+    
+    chkdsk(hdd);
+    printf("%s\n", hdd->tab_blocs[0]->files[0]->nom);
     return 0;
     /*
     

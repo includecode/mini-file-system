@@ -7,8 +7,15 @@
 #define HDD_SIZE 300000 // 3Go ça fait plus réaliste
 #define NBRE_BLOCK 30
 #define BLOCK_SIZE 10000 // 10 Mo
+#define TRUE 1
+#define True 1
+#define true 1
+#define FALSE 0
+#define False 0
+#define false 0	
 
 typedef enum {NORMAL, DIRECTORY, BLOCK, LINK, PIPE} file_type_t;
+typedef short BOOL;
 typedef struct t_fichier t_fichier;
 
 /*Structure d'un utilisateur*/

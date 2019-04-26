@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "primitives.h"
-#include "file_system.c"
+#include "file_system.h"
 
 /*
 t_fichier* bd= creer_un_fichier();
@@ -120,7 +120,6 @@ harddisk_t* init_hdd(){
     hdd->super_block.nbre_inodes = 0;
     hdd->super_block.count_used_blocks = 0;
     hdd->super_block.count_used_inodes = 0;
-    printf("DISQUE DUR VIRTUEL DE %ld OCTECTS CREE\n", HDD_SIZE);
     return hdd;
 }
 
@@ -149,7 +148,7 @@ inode_t* allouer_inode(t_fichier *fichier, harddisk_t *hdd){
 
     //On reserve de l'espace pour le prochain inode
     hdd->tab_inodes = (inode_t**)realloc(hdd->tab_inodes, sizeof(inode_t*) * (hdd->super_block.nbre_inodes +1)); //+1 puisque les inodes commencent à 0
-    printf("Les inodes ont été alloués\n");
+    printf("Une nouvel i-node alloué\n");
     return inode;
 }
 
@@ -158,6 +157,7 @@ void ajouter_fichier_dans_bloc(harddisk_t* hdd, t_fichier *fichier){
     int position = hdd->super_block.count_used_blocks;
     hdd->tab_blocs[hdd->super_block.count_used_blocks]->files[position] = fichier;
     hdd->tab_blocs[hdd->super_block.count_used_blocks]->nbre_fichiers += 1;
+    hdd->super_block.nbre_fichiers += 1;
 
     //TODO: Tester d'abord si la taille de parent_block est assez pour allouer un nouvel espace
     //On reserve de l'espace pour le prochain inode
@@ -173,5 +173,64 @@ t_fichier* creer_un_fichier(harddisk_t *hdd){
     t_fichier* fichier = (t_fichier*)malloc(sizeof(t_fichier));
     printf("Un fichier  a été crée\n");
     return fichier;
+
+}
+
+BOOL file_exist(char* file_name, inode_t directory){
+    if(directory.file_type == DIRECTORY){
+        int i;
+        block_t block_de_recherche = *(directory.bloc);
+        for (i = 0; i < block_de_recherche.nbre_fichiers; i++)
+        {
+            if(strcmp(file_name, block_de_recherche.files[i]->nom) == false)// 0 => files are equal
+                return true;
+        }
+    }else
+    {
+        printf("Warning: You must be in a directory to search for files\n");
+    }
+    
+    
+    return false;
+}
+
+/**
+ *  Crée une repertoire initial (racine) sur le bloc[0] inode[0]
+ *  @param harddisk_t*  : un pointeur sue le disque dur
+*/
+void creer_racine_sgf(harddisk_t *hdd){
+    t_fichier *fichier = creer_un_fichier(hdd);
+    inode_t *inode = allouer_inode(fichier, hdd);
+    inode->file_type = DIRECTORY;
+    fichier->nom = "/root"; //RACINE de notre système*/
+    //TODO s'assurer que le block
+    hdd->tab_blocs = allouer_blocs(hdd);
+    ajouter_fichier_dans_bloc(hdd, fichier);
+    printf("[Boot] Repertoire initial /root initialisé...\n");
+}
+
+/**
+ *  Demarre le systeme virtuel (initialise le HDD et alloue les block, inodes..)
+ *  @return harddisk_t*  : L'adresse du disque dur
+ */
+harddisk_t* boot(){
+    harddisk_t* hdd = init_hdd();
+    printf("[Boot] Disque dur virtuel crée...\n");
+    printf("[Boot] Taille Disque: %ld octets...\n", HDD_SIZE);
+    creer_racine_sgf(hdd);
+    return hdd;
+}
+void chkdsk(harddisk_t *hdd){
+    printf("____________________________________________________\n");
+    printf("Hard disk drive informations:\n");
+    printf("\tSIZE:                             %ld octets\n", HDD_SIZE);
+    printf("\tFREE SIZE:                        TODO\n");
+    printf("\tNOMBRE DE BLOCS:                  %ld blocs\n", NBRE_BLOCK);
+    printf("\tNOMBRE D'I-NODES:                 %d inodes\n", hdd->super_block.nbre_inodes);
+    printf("\tTAILLE D'UN BLOC:                 %ld octets\n", BLOCK_SIZE);
+    printf("\tNombre de blocs Libres:           %d\n", NBRE_BLOCK - hdd->super_block.count_used_blocks);
+    printf("\tNombre de blocs occupés:          %d\n", hdd->super_block.count_used_blocks);
+    printf("\tNombre de fichiers sur le HDD:    %d\n", hdd->super_block.nbre_fichiers);
+    printf("____________________________________________________\n");
 
 }
