@@ -17,15 +17,31 @@ int myread(ino_t inode, char **buffer, int nombre);
 
 int main(int nbarg, char* argv[])
 {
-
+    //Dans le boot() 2 fichiers (repertoires) sont crées sur l'inode N° 0 ( . et root)
     harddisk_t* hdd = boot();
 
-    t_fichier *fichier2 = creer_un_fichier(hdd);
-    inode_t *inode2 = allouer_inode(fichier2, hdd);
-    ajouter_fichier_dans_bloc(hdd, fichier2);
+
+    //TEST DE LA CREATION D'UN FICHIER // ce fichier sera le 3ieme fichier de l'inode 0 et ainsi de suite jusu'a
+    //ce que la taille de l'inode 0 soit totlament occupée ensuite l'inode 1, 2.. 
+    t_fichier *fichier3 = creer_un_fichier(hdd);
+    fichier3->nom = "Un_ficier";
+    inode_t *inode3 = allouer_inode(fichier3, hdd);
+    ajouter_fichier_dans_bloc(hdd, fichier3);
     
+    //*****************TEST DE LA FONCTION DE RECHERCHE D'UN FICHIER
+    printf("\n\nTEST DE LA FONCTION DE RECHERCHE D'UN FICHIER\n");
+    if(file_exist("Un_ficier", &(hdd->current_dir))){
+        printf("existe\n");
+        //stuff
+    }else
+    {
+        printf("n'existe pas\n");
+    }
+
+    //*****************TEST DE LA FONCTION chkdsk
+    printf("\n\nTEST DE LA FONCTION chkdsk\n");
     chkdsk(hdd);
-    printf("%s\n", hdd->tab_blocs[0]->files[0]->nom);
+    
     return 0;
     /*
     

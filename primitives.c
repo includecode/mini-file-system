@@ -131,6 +131,8 @@ block_t** allouer_blocs(harddisk_t *hdd){
         hdd->tab_blocs[i]->nbre_fichiers = 0;
         hdd->tab_blocs[i]->files = (t_fichier**) malloc(sizeof(t_fichier*));
         hdd->tab_blocs[i]->files[0] = (t_fichier*) malloc(sizeof(t_fichier));
+        hdd->tab_blocs[i]->precedent = NULL;
+        hdd->tab_blocs[i]->suivant = NULL;
     }
     
     printf("%d BLOCK ont été crées\n", BLOCK_SIZE);
@@ -153,20 +155,35 @@ inode_t* allouer_inode(t_fichier *fichier, harddisk_t *hdd){
 }
 
 void ajouter_fichier_dans_bloc(harddisk_t* hdd, t_fichier *fichier){
-    //TODO: Tester d'abord si la taille de parent_block est assez pour contenir ce nouveau fichier
-    int position = hdd->super_block.count_used_blocks;
+    
+    //Disque dur plein??
+    if(hdd->super_block.count_used_blocks < NBRE_BLOCK){
+    //On teste si la taille du fichier peur entrer dans le dernier bloc non plein
+    int position;
+    if(!bloc_plein(hdd, *fichier)){
+        position = hdd->tab_blocs[hdd->super_block.count_used_blocks]->nbre_fichiers;
+
+    }else
+    {
+        position = 0;
+        hdd->super_block.count_used_blocks += 1;
+    }
+
+
+    fichier->inode->bloc = hdd->tab_blocs[hdd->super_block.count_used_blocks];
+
     hdd->tab_blocs[hdd->super_block.count_used_blocks]->files[position] = fichier;
     hdd->tab_blocs[hdd->super_block.count_used_blocks]->nbre_fichiers += 1;
     hdd->super_block.nbre_fichiers += 1;
-
-    //TODO: Tester d'abord si la taille de parent_block est assez pour allouer un nouvel espace
-    //On reserve de l'espace pour le prochain inode
     hdd->tab_blocs[hdd->super_block.count_used_blocks]->files = (t_fichier**) realloc(hdd->tab_blocs[hdd->super_block.count_used_blocks]->files, sizeof(t_fichier*) * (hdd->tab_blocs[hdd->super_block.count_used_blocks]->nbre_fichiers + 1)); // +1 car le compteur commence à 0
     hdd->tab_blocs[hdd->super_block.count_used_blocks]->files[position+1] = (t_fichier*) realloc(hdd->tab_blocs[hdd->super_block.count_used_blocks]->files[position+1], sizeof(t_fichier) * (hdd->tab_blocs[hdd->super_block.count_used_blocks]->nbre_fichiers + 1)); // +1 car le compteur commence à 0
     printf("Un fichier a été ajouté au bloc N°%d\n", hdd->super_block.count_used_blocks);
-
-    //TODO: normalement l'ncrementation se fait quant le bloc concerné esst plein
-   hdd->super_block.count_used_blocks = hdd->super_block.count_used_blocks +1;
+    }else
+    {
+        printf("Disque dur plein!! exiting..\n");
+        exit(1);
+    }
+    
 }
 
 t_fichier* creer_un_fichier(harddisk_t *hdd){
@@ -176,13 +193,13 @@ t_fichier* creer_un_fichier(harddisk_t *hdd){
 
 }
 
-BOOL file_exist(char* file_name, inode_t directory){
-    if(directory.file_type == DIRECTORY){
-        int i;
-        block_t block_de_recherche = *(directory.bloc);
-        for (i = 0; i < block_de_recherche.nbre_fichiers; i++)
+BOOL file_exist(char* file_name, t_fichier *directory){
+    if(directory->inode->file_type == DIRECTORY){
+        int i;        
+        for (i = 0; i < directory->inode->bloc->nbre_fichiers; i++)
         {
-            if(strcmp(file_name, block_de_recherche.files[i]->nom) == false)// 0 => files are equal
+            //printf("cmp %s et %s \n", file_name, directory->inode->bloc[0].files[i]->nom);
+            if(strcmp(file_name, directory->inode->bloc[0].files[i]->nom) == false)// 0 => files are equal
                 return true;
         }
     }else
@@ -199,14 +216,24 @@ BOOL file_exist(char* file_name, inode_t directory){
  *  @param harddisk_t*  : un pointeur sue le disque dur
 */
 void creer_racine_sgf(harddisk_t *hdd){
+    //Le fichier << . >>
     t_fichier *fichier = creer_un_fichier(hdd);
     inode_t *inode = allouer_inode(fichier, hdd);
     inode->file_type = DIRECTORY;
-    fichier->nom = "/root"; //RACINE de notre système*/
+    fichier->nom = "."; //RACINE de notre système*/
+    hdd->current_dir = *fichier;
+    fichier->parent = NULL;
     //TODO s'assurer que le block
     hdd->tab_blocs = allouer_blocs(hdd);
     ajouter_fichier_dans_bloc(hdd, fichier);
-    printf("[Boot] Repertoire initial /root initialisé...\n");
+
+    //Le fichier << root >>
+    t_fichier *root = creer_un_fichier(hdd);
+    root->nom = "/root";
+    root->parent = NULL;
+    inode_t *inode_root = allouer_inode(root, hdd);
+    ajouter_fichier_dans_bloc(hdd, root);
+    printf("[Boot] Repertoire initial << . >> initialisé...\n");
 }
 
 /**
@@ -220,6 +247,25 @@ harddisk_t* boot(){
     creer_racine_sgf(hdd);
     return hdd;
 }
+
+
+BOOL bloc_plein(harddisk_t *hdd, t_fichier nouveau_fichier){
+    //TODO tester si la taille du fichier peut entrez avec l'espace restant sur le bloc ou si le bloc est déja plein
+    float block_used_size = 0;
+    int i;
+    for (i = 0; i < hdd->tab_blocs[hdd->super_block.count_used_blocks]->nbre_fichiers; i++){
+        block_used_size += hdd->tab_blocs[hdd->super_block.count_used_blocks]->files[i]->inode->file_size;
+    }
+    if(block_used_size < BLOCK_SIZE){
+        //Taille de block pas dépassée apres ajout du fichier ??
+        if(BLOCK_SIZE <= block_used_size + nouveau_fichier.inode->file_size){
+            return true;
+        }
+    }
+    return false;
+}
+
+
 void chkdsk(harddisk_t *hdd){
     printf("____________________________________________________\n");
     printf("Hard disk drive informations:\n");

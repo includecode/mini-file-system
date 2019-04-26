@@ -16,7 +16,8 @@ void ajouter_fichier_dans_bloc(harddisk_t* hdd, t_fichier *fichier);
 void ajouter_block_dans_inode(block_t* parent_block, inode_t *parent_inode);
 inode_t* allouer_inode();
 void chkdsk(harddisk_t *hdd);
-BOOL file_exist(char* file_name, inode_t directory);
+BOOL file_exist(char* file_name, t_fichier *directory);
+BOOL bloc_plein(harddisk_t *hdd, t_fichier t_fichier);
 harddisk_t* boot();
 t_fichier* creer_un_fichier();
 #endif // PRIMITIVES_H

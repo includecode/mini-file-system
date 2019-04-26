@@ -32,6 +32,8 @@ typedef struct utilisateur_t
 typedef struct block_t
 {
     t_fichier **files;//Liste des fichiers du bloc
+    struct block_t *suivant;
+    struct block_t *precedent;
     int nbre_fichiers;
 }block_t;
 
@@ -57,6 +59,7 @@ typedef struct inode_t
 typedef struct t_fichier
 {
     inode_t *inode;
+    struct t_fichier* parent;//stocke le fichier parent du fichier actuel
     char *nom;
 }t_fichier;
 
@@ -81,6 +84,7 @@ typedef struct harddisk_t
     inode_t **tab_inodes; // Le tableau des inodes
     block_t **tab_blocs; // Le tableau des blocks de 10Mo chacun (pointe sur le premier fichier du bloc)
     super_block_t super_block;
+    t_fichier current_dir; // contient le repertoire dans lequel l'utilisateur se trouve à chaque instant
 }harddisk_t;
 
 #endif // FILE_SYSTEM_H
