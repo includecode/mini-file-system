@@ -31,9 +31,7 @@ typedef struct utilisateur_t
 /*Structure d'un bloc*/
 typedef struct block_t
 {
-    t_fichier **files;//Liste des fichiers du bloc
-    struct block_t *suivant;
-    struct block_t *precedent;
+    t_fichier *files;//Liste des fichiers du bloc
     int nbre_fichiers;
 }block_t;
 
@@ -43,12 +41,12 @@ typedef struct inode_t
     /*Considérons que le numéro d'inode c'est sont index dans le tableau d'inodes*/
 
     file_type_t file_type;
-    char privileges[3]; // EX: {6, 4, 4} Privilèges par defaut
+    char privileges[4]; // EX: {6, 4, 4} Privilèges par defaut
     time_t date_created;
     time_t last_access;
     time_t last_modified;
     int file_size;
-    char mode[10];
+    char mode[12];
     int nbre_links; //0 liens symboliques à la création
     utilisateur_t user; // the file owner
     block_t *bloc;// Le bloc sur lequel pointe l'inode
@@ -58,9 +56,11 @@ typedef struct inode_t
 /*Structure d'un fichier*/
 typedef struct t_fichier
 {
-    inode_t *inode;
-    struct t_fichier* parent;//stocke le fichier parent du fichier actuel
+    inode_t inode;
+    int num_dossier_parent;
     char *nom;
+    char **contenu;
+    int nbr_fichier;
 }t_fichier;
 
 
@@ -80,11 +80,9 @@ typedef struct super_block_t
 typedef struct harddisk_t
 {
     int total_size;
-    t_fichier *tab_fichiers; // Le tableau des noms de fichiers
-    inode_t **tab_inodes; // Le tableau des inodes
-    block_t **tab_blocs; // Le tableau des blocks de 10Mo chacun (pointe sur le premier fichier du bloc)
+    block_t *tab_blocs; // Le tableau des blocks de 10Mo chacun (pointe sur le premier fichier du bloc)
     super_block_t super_block;
-    t_fichier current_dir; // contient le repertoire dans lequel l'utilisateur se trouve à chaque instant
+    int num_current_dir; // contient le repertoire dans lequel l'utilisateur se trouve à chaque instant
 }harddisk_t;
 
 #endif // FILE_SYSTEM_H

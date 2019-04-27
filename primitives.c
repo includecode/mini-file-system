@@ -1,21 +1,47 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include "primitives.h"
-#include "file_system.h"
 
-/*
-t_fichier* bd= creer_un_fichier();
-ino_t mycreat(char* nom, mode_t mode)
+
+inode_t mycreat(char* nom, char mode[11])
 {
-    struct stat sb;
-    creat(nom,mode);
-    stat(nom, &sb);
-    return sb.st_ino;
+    ajouter_fichier_dans_bloc(0);
+    hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.tab_blocs[hdd.super_block.count_used_blocks].nbre_fichiers-1].nom=(char*)malloc(sizeof(char)*(strlen(nom)+1));
+    hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.tab_blocs[hdd.super_block.count_used_blocks].nbre_fichiers-1].contenu=(char**)malloc(sizeof(char*));
+    
+    strcpy(hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.tab_blocs[hdd.super_block.count_used_blocks].nbre_fichiers-1].nom,nom);
+    hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.tab_blocs[hdd.super_block.count_used_blocks].nbre_fichiers-1].inode.file_type=NORMAL;
+    hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.tab_blocs[hdd.super_block.count_used_blocks].nbre_fichiers-1].inode.file_size=0;
+    hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.tab_blocs[hdd.super_block.count_used_blocks].nbre_fichiers-1].inode.nbre_links=0;
+    strcpy(hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.tab_blocs[hdd.super_block.count_used_blocks].nbre_fichiers-1].inode.privileges,"644");
+    strcpy(hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.tab_blocs[hdd.super_block.count_used_blocks].nbre_fichiers-1].inode.mode,mode);
+    hdd.super_block.nbre_inodes++;
+    
+    hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.tab_blocs[hdd.super_block.count_used_blocks].nbre_fichiers-1].nbr_fichier=0;
+    
+    hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.tab_blocs[hdd.super_block.count_used_blocks].nbre_fichiers-1].num_dossier_parent=hdd.num_current_dir;
+    
+    if(hdd.super_block.nbre_fichiers>1)
+    {
+        hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.num_current_dir].nbr_fichier++;
+        hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.num_current_dir].contenu=(char**)realloc(hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.num_current_dir].contenu,sizeof(char*)*hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.num_current_dir].nbr_fichier);
+        
+        hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.num_current_dir].contenu[hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.num_current_dir].nbr_fichier-1]=(char*)malloc(sizeof(char)*(strlen(nom)+1));
+        strcpy(hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.num_current_dir].contenu[hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.num_current_dir].nbr_fichier-1],nom);
+    }
+    return hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.tab_blocs[hdd.super_block.count_used_blocks].nbre_fichiers-1].inode;
+}
+
+void ls()
+{
+    printf("%d\n",hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.num_current_dir].nbr_fichier);
+    for(int i=0;i<hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.num_current_dir].nbr_fichier;i++)
+        printf("%s ",hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.num_current_dir].contenu[i]);
+    printf("\n");
+}
+
+void mymkdir(char* nom)
+{
+    mycreat(nom, "drwxr-xr-x");
+    hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.tab_blocs[hdd.super_block.count_used_blocks].nbre_fichiers-1].inode.file_type=DIRECTORY;
 }
 
 int recup_saisi(char*** saisi_utilisateur)
@@ -48,30 +74,21 @@ int recup_saisi(char*** saisi_utilisateur)
     return nbr_mot;
 }
 
-
-ino_t mycreat(char* nom, mode_t mode)
-{
-    struct stat sb;
-    creat(nom,mode);
-    stat(nom, &sb);
-    return sb.st_ino;
-}
                 
-ino_t myopen(char* nom, mode_t mode)
+/*inode_t myopen(char* nom, char mode[12])
 {
-    struct stat sb;
-    ino_t inode;
-    if(open(nom, O_RDONLY | O_WDONLY)==-1)
+    for(int i=0;i<hdd.super_block.count_used_blocks+1;i++)
     {
-        inode=mycreat(nom,mode);
-        open(nom, O_RDONLY | O_WDONLY);
-        return inode;
-    }
-    stat(nom, &sb);
-    return sb.st_ino;
-}
+        for(int j=0;j<hdd.tab_blocs[i].nbre_fichiers;j++)
+        {
+            if(hdd.tab_blocs[i].files[j].name,nom))
+            
+        }
+    
+    return hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.tab_blocs[hdd.super_block.count_used_blocks].nbre_fichiers-1].inode;
+}*/
 
-void myclose(ino_t inode)
+/*void myclose(ino_t inode)
 {
     close(inode);
 }
@@ -110,75 +127,63 @@ int myread(ino_t inode, char **buffer, int nombre)
 }
 */
 
-harddisk_t* init_hdd(){
-    harddisk_t *hdd =(harddisk_t*) malloc(sizeof(harddisk_t));
-    hdd->tab_blocs = NULL;
-    hdd->tab_fichiers = NULL;
-    hdd->tab_inodes = (inode_t**)malloc(sizeof(inode_t*)); // Un seul inode est crée à l'initialisation
-    hdd->total_size = HDD_SIZE;
-    hdd->super_block.nbre_fichiers = 0;
-    hdd->super_block.nbre_inodes = 0;
-    hdd->super_block.count_used_blocks = 0;
-    hdd->super_block.count_used_inodes = 0;
-    return hdd;
+void init_hdd(){
+    hdd.tab_blocs = NULL;
+    
+    hdd.total_size = HDD_SIZE;
+    hdd.super_block.nbre_fichiers = 0;
+    hdd.super_block.nbre_inodes = 0;
+    hdd.super_block.count_used_blocks = 0;
+    hdd.super_block.count_used_inodes = 0;
+    allouer_blocs();
 }
 
-block_t** allouer_blocs(harddisk_t *hdd){
+/**
+ *  Demarre le systeme virtuel (initialise le HDD et alloue les block, inodes..)
+ *  @return harddisk_t*  : L'adresse du disque dur
+ */
+void boot(){
+    init_hdd();
+    printf("[Boot] Disque dur virtuel crée...\n");
+    printf("[Boot] Taille Disque: %d octets...\n", HDD_SIZE);
+    creer_racine_sgf();
+}
+
+/**
+ *  Crée une repertoire initial (racine) sur le bloc[0] inode[0]
+ *  @param harddisk_t*  : un pointeur sue le disque dur
+ */
+void creer_racine_sgf(){
+    mymkdir("user");
+    hdd.num_current_dir = 0;
+}
+
+
+void allouer_blocs(){
     int i;
-    hdd->tab_blocs = (block_t**)malloc(NBRE_BLOCK * sizeof(block_t*));
+    hdd.tab_blocs = (block_t*)malloc(NBRE_BLOCK * sizeof(block_t));
     for(i=0; i<NBRE_BLOCK; i++){
-        hdd->tab_blocs[i] = (block_t*)malloc(BLOCK_SIZE * sizeof(block_t));
-        hdd->tab_blocs[i]->nbre_fichiers = 0;
-        hdd->tab_blocs[i]->files = (t_fichier**) malloc(sizeof(t_fichier*));
-        hdd->tab_blocs[i]->files[0] = (t_fichier*) malloc(sizeof(t_fichier));
-        hdd->tab_blocs[i]->precedent = NULL;
-        hdd->tab_blocs[i]->suivant = NULL;
+        hdd.tab_blocs[i].nbre_fichiers = 0;
+        hdd.tab_blocs[i].files = (t_fichier*) malloc(sizeof(t_fichier)*hdd.tab_blocs[hdd.super_block.count_used_blocks].nbre_fichiers);
     }
     
     printf("%d BLOCK ont été crées\n", BLOCK_SIZE);
-    return &(hdd->tab_blocs[0]);
 }
 
-inode_t* allouer_inode(t_fichier *fichier, harddisk_t *hdd){
-    inode_t *inode = (inode_t*)malloc(sizeof(inode_t));
-    //inode->file_size = taille
-    //.
-    //.
-    fichier->inode = inode;
-    hdd->tab_inodes[hdd->super_block.nbre_inodes] = inode;
-    hdd->super_block.nbre_inodes += 1;
-
-    //On reserve de l'espace pour le prochain inode
-    hdd->tab_inodes = (inode_t**)realloc(hdd->tab_inodes, sizeof(inode_t*) * (hdd->super_block.nbre_inodes +1)); //+1 puisque les inodes commencent à 0
-    printf("Une nouvel i-node alloué\n");
-    return inode;
-}
-
-void ajouter_fichier_dans_bloc(harddisk_t* hdd, t_fichier *fichier){
+void ajouter_fichier_dans_bloc(int file_size){
     
     //Disque dur plein??
-    if(hdd->super_block.count_used_blocks < NBRE_BLOCK){
+    if(hdd.super_block.count_used_blocks < NBRE_BLOCK){
     //On teste si la taille du fichier peur entrer dans le dernier bloc non plein
-    int position;
-    if(!bloc_plein(hdd, *fichier)){
-        position = hdd->tab_blocs[hdd->super_block.count_used_blocks]->nbre_fichiers;
+        if(bloc_plein(file_size))
+            hdd.super_block.count_used_blocks++;
 
-    }else
-    {
-        position = 0;
-        hdd->super_block.count_used_blocks += 1;
+        hdd.tab_blocs[hdd.super_block.count_used_blocks].nbre_fichiers++;
+        hdd.super_block.nbre_fichiers++;
+        hdd.tab_blocs[hdd.super_block.count_used_blocks].files = (t_fichier*) realloc(hdd.tab_blocs[hdd.super_block.count_used_blocks].files, sizeof(t_fichier) * hdd.tab_blocs[hdd.super_block.count_used_blocks].nbre_fichiers); // +1 car le compteur commence à 0
+        printf("Un fichier a été ajouté au bloc N°%d\n", hdd.super_block.count_used_blocks);
     }
-
-
-    fichier->inode->bloc = hdd->tab_blocs[hdd->super_block.count_used_blocks];
-
-    hdd->tab_blocs[hdd->super_block.count_used_blocks]->files[position] = fichier;
-    hdd->tab_blocs[hdd->super_block.count_used_blocks]->nbre_fichiers += 1;
-    hdd->super_block.nbre_fichiers += 1;
-    hdd->tab_blocs[hdd->super_block.count_used_blocks]->files = (t_fichier**) realloc(hdd->tab_blocs[hdd->super_block.count_used_blocks]->files, sizeof(t_fichier*) * (hdd->tab_blocs[hdd->super_block.count_used_blocks]->nbre_fichiers + 1)); // +1 car le compteur commence à 0
-    hdd->tab_blocs[hdd->super_block.count_used_blocks]->files[position+1] = (t_fichier*) realloc(hdd->tab_blocs[hdd->super_block.count_used_blocks]->files[position+1], sizeof(t_fichier) * (hdd->tab_blocs[hdd->super_block.count_used_blocks]->nbre_fichiers + 1)); // +1 car le compteur commence à 0
-    printf("Un fichier a été ajouté au bloc N°%d\n", hdd->super_block.count_used_blocks);
-    }else
+    else
     {
         printf("Disque dur plein!! exiting..\n");
         exit(1);
@@ -186,20 +191,15 @@ void ajouter_fichier_dans_bloc(harddisk_t* hdd, t_fichier *fichier){
     
 }
 
-t_fichier* creer_un_fichier(harddisk_t *hdd){
-    t_fichier* fichier = (t_fichier*)malloc(sizeof(t_fichier));
-    printf("Un fichier  a été crée\n");
-    return fichier;
 
-}
-
-BOOL file_exist(char* file_name, t_fichier *directory){
-    if(directory->inode->file_type == DIRECTORY){
-        int i;        
-        for (i = 0; i < directory->inode->bloc->nbre_fichiers; i++)
+BOOL file_exist(char* file_name, t_fichier directory){
+    int i;
+    if(directory.inode.file_type == DIRECTORY)
+    {
+        for (i = 0; i < directory.inode.bloc->nbre_fichiers; i++)
         {
             //printf("cmp %s et %s \n", file_name, directory->inode->bloc[0].files[i]->nom);
-            if(strcmp(file_name, directory->inode->bloc[0].files[i]->nom) == false)// 0 => files are equal
+            if(strcmp(file_name, directory.inode.bloc[0].files[i].nom) == false)// 0 => files are equal
                 return true;
         }
     }else
@@ -211,72 +211,38 @@ BOOL file_exist(char* file_name, t_fichier *directory){
     return false;
 }
 
-/**
- *  Crée une repertoire initial (racine) sur le bloc[0] inode[0]
- *  @param harddisk_t*  : un pointeur sue le disque dur
-*/
-void creer_racine_sgf(harddisk_t *hdd){
-    //Le fichier << . >>
-    t_fichier *fichier = creer_un_fichier(hdd);
-    inode_t *inode = allouer_inode(fichier, hdd);
-    inode->file_type = DIRECTORY;
-    fichier->nom = "."; //RACINE de notre système*/
-    hdd->current_dir = *fichier;
-    fichier->parent = NULL;
-    //TODO s'assurer que le block
-    hdd->tab_blocs = allouer_blocs(hdd);
-    ajouter_fichier_dans_bloc(hdd, fichier);
-
-    //Le fichier << root >>
-    t_fichier *root = creer_un_fichier(hdd);
-    root->nom = "/root";
-    root->parent = NULL;
-    inode_t *inode_root = allouer_inode(root, hdd);
-    ajouter_fichier_dans_bloc(hdd, root);
-    printf("[Boot] Repertoire initial << . >> initialisé...\n");
-}
-
-/**
- *  Demarre le systeme virtuel (initialise le HDD et alloue les block, inodes..)
- *  @return harddisk_t*  : L'adresse du disque dur
- */
-harddisk_t* boot(){
-    harddisk_t* hdd = init_hdd();
-    printf("[Boot] Disque dur virtuel crée...\n");
-    printf("[Boot] Taille Disque: %ld octets...\n", HDD_SIZE);
-    creer_racine_sgf(hdd);
-    return hdd;
-}
 
 
-BOOL bloc_plein(harddisk_t *hdd, t_fichier nouveau_fichier){
+BOOL bloc_plein(int file_size){
     //TODO tester si la taille du fichier peut entrez avec l'espace restant sur le bloc ou si le bloc est déja plein
     float block_used_size = 0;
     int i;
-    for (i = 0; i < hdd->tab_blocs[hdd->super_block.count_used_blocks]->nbre_fichiers; i++){
-        block_used_size += hdd->tab_blocs[hdd->super_block.count_used_blocks]->files[i]->inode->file_size;
+    for (i = 0; i < hdd.tab_blocs[hdd.super_block.count_used_blocks].nbre_fichiers; i++){
+        block_used_size += hdd.tab_blocs[hdd.super_block.count_used_blocks].files[i].inode.file_size;
     }
-    if(block_used_size < BLOCK_SIZE){
+    if(block_used_size <= BLOCK_SIZE){
         //Taille de block pas dépassée apres ajout du fichier ??
-        if(BLOCK_SIZE <= block_used_size + nouveau_fichier.inode->file_size){
+        if(BLOCK_SIZE <= block_used_size + file_size){
             return true;
         }
     }
+    else
+        return true;
     return false;
 }
 
 
-void chkdsk(harddisk_t *hdd){
+void chkdsk(){
     printf("____________________________________________________\n");
     printf("Hard disk drive informations:\n");
-    printf("\tSIZE:                             %ld octets\n", HDD_SIZE);
+    printf("\tSIZE:                             %d octets\n", HDD_SIZE);
     printf("\tFREE SIZE:                        TODO\n");
-    printf("\tNOMBRE DE BLOCS:                  %ld blocs\n", NBRE_BLOCK);
-    printf("\tNOMBRE D'I-NODES:                 %d inodes\n", hdd->super_block.nbre_inodes);
-    printf("\tTAILLE D'UN BLOC:                 %ld octets\n", BLOCK_SIZE);
-    printf("\tNombre de blocs Libres:           %d\n", NBRE_BLOCK - hdd->super_block.count_used_blocks);
-    printf("\tNombre de blocs occupés:          %d\n", hdd->super_block.count_used_blocks);
-    printf("\tNombre de fichiers sur le HDD:    %d\n", hdd->super_block.nbre_fichiers);
+    printf("\tNOMBRE DE BLOCS:                  %d blocs\n", NBRE_BLOCK);
+    printf("\tNOMBRE D'I-NODES:                 %d inodes\n", hdd.super_block.nbre_inodes);
+    printf("\tTAILLE D'UN BLOC:                 %d octets\n", BLOCK_SIZE);
+    printf("\tNombre de blocs Libres:           %d\n", NBRE_BLOCK - hdd.super_block.count_used_blocks);
+    printf("\tNombre de blocs occupés:          %d\n", hdd.super_block.count_used_blocks);
+    printf("\tNombre de fichiers sur le HDD:    %d\n", hdd.super_block.nbre_fichiers);
     printf("____________________________________________________\n");
 
 }
