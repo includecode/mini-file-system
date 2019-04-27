@@ -32,10 +32,46 @@ inode_t mycreat(char* nom, char mode[11])
 
 void ls()
 {
-    printf("%d\n",hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.num_current_dir].nbr_fichier);
     for(int i=0;i<hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.num_current_dir].nbr_fichier;i++)
         printf("%s ",hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.num_current_dir].contenu[i]);
     printf("\n");
+}
+
+BOOL existance_fichier(char *name)
+{
+    BOOL existance=false;
+    for(int i=0;i<hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.num_current_dir].nbr_fichier;i++)
+    {
+        if(strstr(hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.num_current_dir].contenu[i],name))
+            return true;
+    }
+    return false;
+}
+
+int position_rep(char* name)
+{
+    for(int i=0;i<hdd.super_block.count_used_blocks+1;i++)
+    {
+        for(int j=0;j<hdd.tab_blocs[i].nbre_fichiers;j++)
+        {
+            if(hdd.tab_blocs[i].files[j].inode.file_type==DIRECTORY && strstr(hdd.tab_blocs[i].files[j].nom,name))
+               return j;
+        }
+    }
+    return -1;
+}
+
+void cd(char* name)
+{
+    int pos;
+    if(strstr(name,".."))
+        hdd.num_current_dir=hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.num_current_dir].num_dossier_parent;
+    else
+    {
+        pos=position_rep(name);
+        if(pos!=-1 && existance_fichier(name))
+            hdd.num_current_dir=pos;
+    }
 }
 
 void mymkdir(char* nom)
@@ -202,7 +238,8 @@ BOOL file_exist(char* file_name, t_fichier directory){
             if(strcmp(file_name, directory.inode.bloc[0].files[i].nom) == false)// 0 => files are equal
                 return true;
         }
-    }else
+    }
+    else
     {
         printf("Warning: You must be in a directory to search for files\n");
     }

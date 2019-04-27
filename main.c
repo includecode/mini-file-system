@@ -27,6 +27,10 @@ int main(int nbarg, char* argv[])
         {
             ls();
         }
+        else if(strstr(saisi_utilisateur[0],"cd"))
+        {
+            cd(saisi_utilisateur[1]);
+        }
         /*else if(strstr(saisi_utilisateur[0],"open"))
         {
             for(i=1;i<nbr_mot;i++)

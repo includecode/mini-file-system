@@ -24,4 +24,7 @@ harddisk_t hdd;
 void mymkdir(char* nom);
 void creer_racine_sgf();
 void ls();
+BOOL existance_fichier(char *name);
+int position_rep(char* name);
+void cd(char* name);
 #endif // PRIMITIVES_H
