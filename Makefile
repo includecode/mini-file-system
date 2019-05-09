@@ -8,7 +8,7 @@
 
 
 #variable du compilateur gcc
-CC = gcc -fPIC
+CC = gcc
 
 #The final ecacutable name
 EXEC = myShell

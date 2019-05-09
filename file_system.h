@@ -12,7 +12,8 @@
 #define true 1
 #define FALSE 0
 #define False 0
-#define false 0	
+#define false 0
+#define root_folder_name "user"
 
 typedef enum {NORMAL, DIRECTORY, BLOCK, LINK, PIPE} file_type_t;
 typedef short BOOL;
@@ -31,7 +32,7 @@ typedef struct utilisateur_t
 /*Structure d'un bloc*/
 typedef struct block_t
 {
-    t_fichier *files;//Liste des fichiers du bloc
+    t_fichier **files;//Liste des fichiers du bloc
     int nbre_fichiers;
 }block_t;
 
@@ -48,19 +49,18 @@ typedef struct inode_t
     int file_size;
     char mode[12];
     int nbre_links; //0 liens symboliques à la création
-    utilisateur_t user; // the file owner
-    block_t *bloc;// Le bloc sur lequel pointe l'inode
-    
+    utilisateur_t user; // the file owner    
 }inode_t;
 
 /*Structure d'un fichier*/
 typedef struct t_fichier
 {
     inode_t inode;
-    int num_dossier_parent;
+    t_fichier *dossier_parent;
     char *nom;
     char **contenu;
     int nbr_fichier;
+    block_t *bloc;
 }t_fichier;
 
 
@@ -82,7 +82,7 @@ typedef struct harddisk_t
     int total_size;
     block_t *tab_blocs; // Le tableau des blocks de 10Mo chacun (pointe sur le premier fichier du bloc)
     super_block_t super_block;
-    int num_current_dir; // contient le repertoire dans lequel l'utilisateur se trouve à chaque instant
+    t_fichier *current_dir; // contient le repertoire dans lequel l'utilisateur se trouve à chaque instant
 }harddisk_t;
 
 #endif // FILE_SYSTEM_H
