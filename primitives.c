@@ -731,6 +731,7 @@ void mymv(char* nom1, char* nom2)
 {
     t_fichier *tmpCurrentDirSource=NULL;
     t_fichier *tmpCurrentDirTarget=NULL;
+    t_fichier *file=NULL;
     char* name1=NULL;
     char* name2=NULL;
     BOOL test=check_current_dir(nom1, &tmpCurrentDirSource, &name1);
@@ -747,16 +748,30 @@ void mymv(char* nom1, char* nom2)
                 {
                     if(strcmp(tmpCurrentDirSource->bloc->files[j]->nom,name1)==0)
                     {
-                        if(file_exist(name2,tmpCurrentDirTarget)->inode->file_type==DIRECTORY)
+                        file=file_exist(name2,tmpCurrentDirTarget);
+                        if(file->nbr_fichier!=-1)
                         {
-                            tmpCurrentDirTarget=file_exist(name2,tmpCurrentDirTarget);
-                            tmpCurrentDirSource->bloc->files[j]->dossier_parent=tmpCurrentDirTarget;
-                            tmpCurrentDirSource->bloc->files[j]->nom=(char*)realloc(tmpCurrentDirSource->bloc->files[j]->nom,sizeof(char)*strlen(name1)+1);
-                            strcpy(tmpCurrentDirSource->bloc->files[j]->nom,name1);
-                            tmpCurrentDirTarget->nbr_fichier++;
-                            tmpCurrentDirTarget->contenu=(char**)realloc(tmpCurrentDirTarget->contenu,sizeof(char*)*tmpCurrentDirTarget->nbr_fichier);
-                            tmpCurrentDirTarget->contenu[tmpCurrentDirTarget->nbr_fichier-1]=(char*)malloc(sizeof(char)*strlen(name1)+1);
-                            strcpy(tmpCurrentDirTarget->contenu[tmpCurrentDirTarget->nbr_fichier-1],name1);
+                            if(file_exist(name2,tmpCurrentDirTarget)->inode->file_type==DIRECTORY)
+                            {
+                                tmpCurrentDirTarget=file_exist(name2,tmpCurrentDirTarget);
+                                tmpCurrentDirSource->bloc->files[j]->dossier_parent=tmpCurrentDirTarget;
+                                tmpCurrentDirSource->bloc->files[j]->nom=(char*)realloc(tmpCurrentDirSource->bloc->files[j]->nom,sizeof(char)*strlen(name1)+1);
+                                strcpy(tmpCurrentDirSource->bloc->files[j]->nom,name1);
+                                tmpCurrentDirTarget->nbr_fichier++;
+                                tmpCurrentDirTarget->contenu=(char**)realloc(tmpCurrentDirTarget->contenu,sizeof(char*)*tmpCurrentDirTarget->nbr_fichier);
+                                tmpCurrentDirTarget->contenu[tmpCurrentDirTarget->nbr_fichier-1]=(char*)malloc(sizeof(char)*strlen(name1)+1);
+                                strcpy(tmpCurrentDirTarget->contenu[tmpCurrentDirTarget->nbr_fichier-1],name1);
+                            }
+                            else
+                            {
+                                tmpCurrentDirSource->bloc->files[j]->dossier_parent=tmpCurrentDirTarget;
+                                tmpCurrentDirSource->bloc->files[j]->nom=(char*)realloc(tmpCurrentDirSource->bloc->files[j]->nom,sizeof(char)*strlen(name2)+1);
+                                strcpy(tmpCurrentDirSource->bloc->files[j]->nom,name2);
+                                tmpCurrentDirTarget->nbr_fichier++;
+                                tmpCurrentDirTarget->contenu=(char**)realloc(tmpCurrentDirTarget->contenu,sizeof(char*)*tmpCurrentDirTarget->nbr_fichier);
+                                tmpCurrentDirTarget->contenu[tmpCurrentDirTarget->nbr_fichier-1]=(char*)malloc(sizeof(char)*strlen(name2)+1);
+                                strcpy(tmpCurrentDirTarget->contenu[tmpCurrentDirTarget->nbr_fichier-1],name2);
+                            }
                         }
                         else
                         {
