@@ -43,4 +43,5 @@ void echo(char** saisi_utilisateur,int nbr_mot);
 void cat(char *nom);
 void saveHDD();
 BOOL check_current_dir(char* nom, t_fichier **newCurrentDir, char** name);
+void pwd();
 #endif // PRIMITIVES_H

@@ -3,7 +3,6 @@ int main(int nbarg, char *argv[])
 {
     int i, nbr_mot = 0;
     char **saisi_utilisateur = (char **)malloc(sizeof(char *));
-    //loadHDD();
     //Dans le boot() 1 fichier (repertoire) est crée sur l'inode N° 0 ( user)
     boot();
 
@@ -65,52 +64,10 @@ int main(int nbarg, char *argv[])
         {
             if(nbr_mot==3)
                 mymv(saisi_utilisateur[1],saisi_utilisateur[2]);
-            /*if (begins_with_root_folder(saisi_utilisateur[1]))
-            {
-                char *source_file_name = explode_last_from_path(saisi_utilisateur[1]);
-                t_fichier *fichier = file_exist(source_file_name, hdd.current_dir);
-                t_fichier *source;
-                if (fichier->nbr_fichier != -1)
-                {
-                    if (saisi_utilisateur[2] != NULL)
-                    {
-                        if (begins_with_root_folder(saisi_utilisateur[2]))
-                        {
-                            t_fichier *destUrl = url_exists(saisi_utilisateur[2], 'D');
-                            if (destUrl != NULL)
-                            {
-                                t_fichier *source = url_exists(saisi_utilisateur[1], 'S');
-                                if (source != NULL)
-                                {
-                                    if(source != hdd.tab_blocs[0].files[0])
-                                        mymv(source, destUrl);
-                                    else
-                                    {
-                                        printf("Interdit de déplacer le dossier racine !\n");
-                                    }
-                                }
-                            }
-                        }
-                        else
-                        {
-                            printf("File destination must be absolute path ! ex: %s\\folder1\\folder2  %s\\folder3\\folder4\n", root_folder_name, root_folder_name);
-                        }
-                    }
-                    else
-                    {
-                        printf("/!\\ Destination missing\n");
-                    }
-                }
-                else
-                {
-                    free(fichier);
-                    printf("Le fichier %s n'existe pas !\n", saisi_utilisateur[1]);
-                }
-            }
-            else
-            {
-                printf("File source must be absolute path ! ex:  cp %s\\folder1\\folder2 %s\\folder3\\folder4\n", root_folder_name);
-            }*/
+        }
+        else if (strcmp(saisi_utilisateur[0], "pwd")==0)
+        {
+            pwd();
         }
         else if (strcmp(saisi_utilisateur[0], "quit")==0)
         {

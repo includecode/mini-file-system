@@ -1,5 +1,6 @@
 #include "primitives.h"
 char prompt[100] = "myshell@user~:";
+char chemin[100] = "/user";
 inode_t* mycreat(char *nom, char mode[11])
 {
     t_fichier *tmpCurrentDir=hdd.current_dir;
@@ -214,6 +215,7 @@ void echo(char** saisi_utilisateur,int nbr_mot)
     {
         for(i=1;i<nbr_mot;i++)
             printf("%s ",saisi_utilisateur[i]);
+        printf("\n");
     }
 }
 
@@ -304,6 +306,10 @@ int position_rep(char *name)
     }
     return -1;
 }
+void pwd()
+{
+    printf("%s\n",chemin);
+}
 
 void cd(char *name)
 {
@@ -327,6 +333,7 @@ void cd(char *name)
                     char next_prompt[100] = "/";
                     strcat(next_prompt, testExist->nom);
                     strcat(prompt, next_prompt);
+                    strcat(chemin, next_prompt);
                     hdd.current_dir = testExist;
                 }
                 else
@@ -360,7 +367,7 @@ int recup_saisi(char ***saisi_utilisateur)
     char mot[10][50];
     int i, nbr_mot = 0;
     int taille = 0;
-    printf("%s $", prompt);
+    printf("%s $ ", prompt);
     fgets(tmp, 100, stdin);
     for (i = 0; i < strlen(tmp); i++)
     {
@@ -482,7 +489,6 @@ void mycp(char *nom1, char *nom2)
                 tmpCurrentDirTarget->bloc->files[tmpCurrentDirTarget->bloc->nbre_fichiers-1]->inode->user=tmpCurrentDirSource->bloc->files[j]->inode->user;
                 tmpCurrentDirTarget->bloc->files[tmpCurrentDirTarget->bloc->nbre_fichiers-1]->nbr_ligne=tmpCurrentDirSource->bloc->files[j]->nbr_ligne;
                 tmpCurrentDirTarget->bloc->files[tmpCurrentDirTarget->bloc->nbre_fichiers-1]->nbr_fichier=tmpCurrentDirSource->bloc->files[j]->nbr_fichier;
-                printf("yes\n");
                 tmpCurrentDirTarget->bloc->files[tmpCurrentDirTarget->bloc->nbre_fichiers-1]->contenu=(char**)realloc(tmpCurrentDirTarget->bloc->files[tmpCurrentDirTarget->bloc->nbre_fichiers-1]->contenu,sizeof(char*)*tmpCurrentDirSource->bloc->files[j]->nbr_fichier);
                 
                 for(int k=0;k<tmpCurrentDirSource->bloc->files[j]->nbr_ligne;k++)
@@ -602,20 +608,31 @@ char *explode_last_from_path(char *string)
  * */
 void roll_back_prompt_once()
 {
-    char *last_folder;
-    int i, pos_last_slash;
+    char *last_folder1;
+    char *last_folder2;
+    int i, pos_last_slash1,pos_last_slash2;
 
     //find the last slash position
     for (i = 0; i < strlen(prompt); i++)
     {
-        last_folder = strrchr(prompt, '/');
-        if (strcmp(&prompt[i], last_folder) == 0)
+        last_folder1 = strrchr(prompt, '/');
+        if (strcmp(&prompt[i], last_folder1) == 0)
         {
-            pos_last_slash = i;
+            pos_last_slash1 = i;
             break;
         }
     }
-    prompt[pos_last_slash] = '\0';
+    for (int j = 0; j < strlen(chemin); j++)
+    {
+        last_folder2 = strrchr(chemin, '/');
+        if (strcmp(&chemin[j], last_folder2) == 0)
+        {
+            pos_last_slash2 = j;
+            break;
+        }
+    }
+    prompt[pos_last_slash1] = '\0';
+    chemin[pos_last_slash2] = '\0';
 }
 /**
  * Verify if the path starts with the defined "root_folder_name"
