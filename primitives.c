@@ -1,8 +1,13 @@
 #include "primitives.h"
+
+//Begin of each line
 char prompt[100] = "myshell@user~:";
 char chemin[100] = "/user";
+
+//Primitives my create, create a file with the given name and the given mode in the disk
 inode_t* mycreat(char *nom, char mode[11])
 {
+	//Check if the name given is already taken in the current directory
     t_fichier *tmpCurrentDir=hdd.current_dir;
     char* name=NULL;
     BOOL continuer = true;
@@ -28,6 +33,7 @@ inode_t* mycreat(char *nom, char mode[11])
         strcpy(name,nom);
     }
     
+    //If every check are ok, then create the file
     if (continuer)
     {
         ajouter_fichier_dans_bloc(0);
@@ -69,10 +75,11 @@ inode_t* mycreat(char *nom, char mode[11])
             hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.tab_blocs[hdd.super_block.count_used_blocks].nbre_fichiers - 1]->dossier_parent = tmpCurrentDir;
         }
     }
-    
+    //return the inode of the file
     return hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.tab_blocs[hdd.super_block.count_used_blocks].nbre_fichiers - 1]->inode;
 }
 
+//Primitive mylink, create a link with a file
 void mylink(char* nom1, char* nom2){
 
 	BOOL continuer = False;
@@ -99,10 +106,10 @@ void mylink(char* nom1, char* nom2){
     }
 	if(continuer == True)
 	{
-		//On test si le disque est plein
+		//Check if the bloc is full
 		if (hdd.super_block.count_used_blocks < NBRE_BLOCK)
 		{
-			//On teste si la taille du fichier peur entrer dans le dernier bloc non plein
+			//check if the file can be contained by the last bloc non full
 			if (bloc_plein(0))
 				hdd.super_block.count_used_blocks++;
 
@@ -133,6 +140,7 @@ void mylink(char* nom1, char* nom2){
 	}
 }
 
+//Primitives myopen, open a file
 t_fichier* myopen(char* nom, mode_tt ouverture)
 {
     t_fichier *file=NULL;
@@ -154,6 +162,7 @@ t_fichier* myopen(char* nom, mode_tt ouverture)
         return NULL;
 }
 
+//Primitive mywrite, allow the user to write in a file
 void mywrite(char * text, t_fichier *file)
 {
     file->nbr_ligne++;
@@ -162,6 +171,7 @@ void mywrite(char * text, t_fichier *file)
     strcpy(file->contenu[file->nbr_ligne-1],text);
 }
 
+//Primitive myread, allow the user to read a file
 void myread(t_fichier *file)
 {
     for(int j=0;j<file->nbr_ligne;j++)
@@ -170,11 +180,13 @@ void myread(t_fichier *file)
     }
 }
 
+//Primitive myclose, close a file
 void myclose(t_fichier *file)
 {
     file->inode->ouverture=O_CLOSE;
 }
 
+//Command echo, print the entry of the user
 void echo(char** saisi_utilisateur,int nbr_mot)
 {
     t_fichier *file=NULL;
@@ -219,6 +231,7 @@ void echo(char** saisi_utilisateur,int nbr_mot)
     }
 }
 
+//Command cat, display the content of a file
 void cat(char *nom)
 {
     t_fichier *file=NULL;
@@ -240,11 +253,7 @@ void cat(char *nom)
     }
 }
 
-/**
- *  Cherche si un fichier existe et retourne son adresse
- *  Sinon retourne un t_fichier avec comme num_dossier_parent -1 (code d'erreur)
- *
- */
+//Check if a file exist and return a point on it (or error code if it does not exist)
 t_fichier *file_exist(char *file_name, t_fichier *directory)
 {
     int i;
@@ -270,6 +279,7 @@ t_fichier *file_exist(char *file_name, t_fichier *directory)
     return error_code;
 }
 
+//Command ls, which print everything in the current directory
 void ls()
 {
     for(int j=0;j<hdd.current_dir->nbr_fichier;j++)
@@ -283,9 +293,9 @@ void ls()
     printf("\n");
 }
 
+//Check if a file exist or not, and return a boolean
 BOOL existance_fichier(char *name)
 {
-    //BOOL existance = false;
     for (int i = 0; i < hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.current_dir->nbr_fichier]->nbr_fichier; i++)
     {
         if (strcmp(hdd.tab_blocs[hdd.super_block.count_used_blocks].files[hdd.current_dir->nbr_fichier]->contenu[i], name)==0)
@@ -294,6 +304,7 @@ BOOL existance_fichier(char *name)
     return false;
 }
 
+//Return the of a directory, needs the name of the directory we are looking for
 int position_rep(char *name)
 {
     for (int i = 0; i < hdd.super_block.count_used_blocks + 1; i++)
@@ -311,6 +322,7 @@ void pwd()
     printf("%s\n",chemin);
 }
 
+//Command cd, allow the user to navigate in the disk
 void cd(char *name)
 {
     if (name != NULL)
@@ -355,12 +367,14 @@ void cd(char *name)
     }
 }
 
+//Primitive mymkdir, create a file of type directory in the disk, using mycreate
 void mymkdir(char *nom)
 {
     mycreat(nom, "drwxr-xr-x");
     hdd.tab_inodes[hdd.super_block.nbre_inodes -1]->file_type = DIRECTORY;
 }
 
+//Get the user entry and return it by the pointer of char given
 int recup_saisi(char ***saisi_utilisateur)
 {
     char tmp[100];
@@ -391,7 +405,7 @@ int recup_saisi(char ***saisi_utilisateur)
     return nbr_mot;
 }
 
-
+//Initialisation of the disk
 void init_hdd()
 {
     hdd.tab_blocs = NULL;
@@ -405,10 +419,7 @@ void init_hdd()
     allouer_blocs();
 }
 
-/**
- *  Demarre le systeme virtuel (initialise le HDD et alloue les block, inodes..)
- *  @return harddisk_t*  : L'adresse du disque dur
- */
+ //Start the disk
 void boot()
 {
     init_hdd();
@@ -417,10 +428,7 @@ void boot()
     creer_racine_sgf();
 }
 
-/**
- *  Crée une repertoire initial (racine) sur le bloc[0] inode[0]
- *  @param harddisk_t*  : un pointeur sue le disque dur
- */
+ //create the root of the disk
 void creer_racine_sgf()
 {
 
@@ -430,11 +438,10 @@ void creer_racine_sgf()
     hdd.tab_blocs[0].files[0]->inode->file_type = DIRECTORY;
     printf("[Boot] Taille Disque: %d octets...\n", HDD_SIZE);
     hdd.current_dir->nbr_fichier = 0;
-    printf("[Boot] Taille Disque: %d octets...\n", HDD_SIZE);
     hdd.current_dir->inode->file_type = DIRECTORY;
-    printf("[Boot] Taille Disque: %d octets...\n", HDD_SIZE);
 }
 
+//create the space for every block of the disk
 void allouer_blocs()
 {
     int i;
@@ -452,6 +459,7 @@ void allouer_blocs()
     printf("%d BLOCK ont été crées\n", BLOCK_SIZE);
 }
 
+//Command cp, copy paste a file, origin / destination
 void mycp(char *nom1, char *nom2)
 {
     BOOL continuer = false;
@@ -501,12 +509,8 @@ void mycp(char *nom1, char *nom2)
         }
     }
 }
-/**
- * Teste si le chemin de copie est correct (existe)
- * @Return t_fichier    : le fichier correspodant au repertoire destination
- * @Return NULL         : si le chemin n'existe pas
- * @Param path_type     : Le type de chemin à tester (source = 'S' ou  destination = 'D')
- **/
+
+//Check if the path exist, return null if not, return a pointer on file if yes
 t_fichier *url_exists(char *string, char path_type)
 {
     BOOL must_be_directory = true;
@@ -525,7 +529,7 @@ t_fichier *url_exists(char *string, char path_type)
     if (pch != NULL)
     {
 
-        //On parcours tous les blocks pour vérifier que tous le dossiers du chemin existent
+		//Testing evryr blocs to check if every directory of the file exists
         for (i = 0; i < hdd.super_block.count_used_blocks + 1; i++)
         {
             current_block = hdd.tab_blocs[i];
@@ -582,6 +586,7 @@ t_fichier *url_exists(char *string, char path_type)
 
     return destination;
 }
+
 char *explode_last_from_path(char *string)
 {
     char *pch, *last_pch;
@@ -602,10 +607,9 @@ char *explode_last_from_path(char *string)
 
     return last_pch;
 }
-/**
- * Supprime un repertoire du chemin prompt
- * Ex: a/b/c/d => a/b/c
- * */
+
+//Delete a directory from the path promt
+//Ex: a/b/c/d => a/b/c
 void roll_back_prompt_once()
 {
     char *last_folder1;
@@ -634,10 +638,8 @@ void roll_back_prompt_once()
     prompt[pos_last_slash1] = '\0';
     chemin[pos_last_slash2] = '\0';
 }
-/**
- * Verify if the path starts with the defined "root_folder_name"
- * @Return  : boolean
- * */
+
+ //Verify if the path starts with the defined "root_folder_name", returns a bool
 BOOL begins_with_root_folder(char *path)
 {
 
@@ -659,13 +661,15 @@ BOOL begins_with_root_folder(char *path)
         return False;
     }
 }
+
+//Add a file in a bloc
 void ajouter_fichier_dans_bloc(int file_size)
 {
 
-    //Disque dur plein??
+    //check if the fisk is full
     if (hdd.super_block.count_used_blocks < NBRE_BLOCK)
     {
-        //On teste si la taille du fichier peur entrer dans le dernier bloc non plein
+        //check if the file can be contained by the last non full bloc
         if (bloc_plein(file_size))
             hdd.super_block.count_used_blocks++;
 
@@ -681,11 +685,9 @@ void ajouter_fichier_dans_bloc(int file_size)
     }
 }
 
-
-
+//Check if the bloc can contain the file
 BOOL bloc_plein(int file_size)
 {
-    //TODO tester si la taille du fichier peut entrez avec l'espace restant sur le bloc ou si le bloc est déja plein
     float block_used_size = 0;
     int i;
     for (i = 0; i < hdd.tab_blocs[hdd.super_block.count_used_blocks].nbre_fichiers; i++)
@@ -694,7 +696,7 @@ BOOL bloc_plein(int file_size)
     }
     if (block_used_size <= BLOCK_SIZE)
     {
-        //Taille de block pas dépassée apres ajout du fichier ??
+        //check if theres is an overflowed or not
         if (BLOCK_SIZE <= block_used_size + file_size)
         {
             return true;
@@ -704,11 +706,8 @@ BOOL bloc_plein(int file_size)
         return true;
     return false;
 }
-/**
- * Deletes a file
- * @Param file  : file to delete
- * NOTE a deleted file is just hidden
- * */
+
+//Command rm, delete a file
 void myrm(char *nom)
 {
     t_fichier *file=NULL;
@@ -744,6 +743,8 @@ void myrm(char *nom)
         printf("Erreur dans le chemin\n");
 }
 
+//Command mv, move a file to another location (can rename it)
+//Source, destination
 void mymv(char* nom1, char* nom2)
 {
     t_fichier *tmpCurrentDirSource=NULL;
@@ -809,7 +810,7 @@ void mymv(char* nom1, char* nom2)
     }
 }
 
-
+//Command rmdir, delete a diretory
 void myrmdir(char *nom)
 {
     
@@ -861,7 +862,7 @@ void myrmdir(char *nom)
     }
 }
 
-
+//check the current dir
 BOOL check_current_dir(char* nom, t_fichier **newCurrentDir, char** name)
 {
     char tmp[50][50];
@@ -950,7 +951,7 @@ BOOL check_current_dir(char* nom, t_fichier **newCurrentDir, char** name)
     return test;
 }
 
-
+//Primitive chkdsk, command df, print disk state
 void chkdsk()
 {
     printf("____________________________________________________\n");
@@ -966,6 +967,7 @@ void chkdsk()
     printf("____________________________________________________\n");
 }
 
+//Save the state of the current disk and every it content
 void saveHDD()
 {
     DIR* pDir;
@@ -1047,35 +1049,6 @@ void saveHDD()
     else
     {
         printf("Erreur lors de la sauvegarde");
-        exit(1);
-    }
-}
-
-
-void loadHDD()
-{
-    
-    FILE* fichier = NULL;
-    
-    fichier = fopen("save/hdd.txt", "r");
-    
-    if(fichier != NULL)
-    {
-        int charactere;
-        
-        while((char)charactere != EOF)
-        {
-            charactere = fgetc(fichier);
-            //sleep(0.5);
-            printf("%c", charactere);
-        }
-        printf("\n");
-        
-        fclose(fichier);
-    }
-    else
-    {
-        printf("Erreur lors de la sauvegarde\n");
         exit(1);
     }
 }

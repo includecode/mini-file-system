@@ -1,6 +1,7 @@
 #ifndef PRIMITIVES_H
 #define PRIMITIVES_H
 
+//Inlcude
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,6 +10,8 @@
 #include <sys/stat.h>
 #include "file_system.h"
 #include <dirent.h>
+
+//Prototype
 inode_t* mycreat(char* nom, char mode[12]);
 void mylink(char* nom1, char* nom2);
 void mywrite(char * text, t_fichier *file);
